@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dnyx Colorful To-Do List</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Poppins",sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.todo-app{
+  width:360px;
+  background:#fff;
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,0.25);
+  animation:fadeIn .8s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+h1{
+  text-align:center;
+  margin-bottom:15px;
+  color:#5a4fcf;
+}
+
+/* Input */
+.input-box{
+  display:flex;
+  gap:10px;
+}
+
+.input-box input{
+  flex:1;
+  padding:10px;
+  border-radius:8px;
+  border:2px solid #ddd;
+  outline:none;
+}
+
+.input-box button{
+  background:#5a4fcf;
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.input-box button:hover{
+  background:#483d8b;
+}
+
+/* Filters */
+.filters{
+  display:flex;
+  margin:15px 0;
+}
+
+.filters button{
+  flex:1;
+  margin:0 3px;
+  padding:6px;
+  border:none;
+  border-radius:6px;
+  background:#e0e0ff;
+  color:#5a4fcf;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.filters button.active{
+  background:#5a4fcf;
+  color:#fff;
+}
+
+/* Task list */
+ul{
+  list-style:none;
+  max-height:300px;
+  overflow-y:auto;
+}
+
+li{
+  background:#f4f4ff;
+  margin-bottom:8px;
+  padding:10px;
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  animation:slideIn .3s ease;
+}
+
+@keyframes slideIn{
+  from{transform:translateX(-10px);opacity:0}
+  to{transform:translateX(0);opacity:1}
+}
+
+li.completed{
+  background:#c8f7dc;
+  text-decoration:line-through;
+  color:#555;
+}
+
+.task-text{
+  flex:1;
+  cursor:pointer;
+}
+
+.actions button{
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
+  margin-left:6px;
+  transition:.2s;
+}
+
+.actions button:hover{
+  transform:scale(1.2);
+}
+</style>
+</head>
+
+<body>
+
+<div class="todo-app">
+  <h1>📝 To-Do List</h1>
+
+  <div class="input-box">
+    <input type="text" id="taskInput" placeholder="Add your task...">
+    <button onclick="addTask()">ADD</button>
+  </div>
+
+  <div class="filters">
+    <button class="active" onclick="setFilter('all',this)">All</button>
+    <button onclick="setFilter('completed',this)">Done</button>
+    <button onclick="setFilter('pending',this)">Pending</button>
+  </div>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let filter = "all";
+
+function saveTasks(){
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function addTask(){
+  const input=document.getElementById("taskInput");
+  if(input.value.trim()==="")return;
+
+  tasks.push({
+    id:Date.now(),
+    text:input.value,
+    completed:false
+  });
+
+  input.value="";
+  saveTasks();
+  renderTasks();
+}
+
+function toggleTask(id){
+  tasks=tasks.map(task =>
+    task.id===id ? {...task,completed:!task.completed} : task
+  );
+  saveTasks();
+  renderTasks();
+}
+
+function deleteTask(id){
+  tasks=tasks.filter(task=>task.id!==id);
+  saveTasks();
+  renderTasks();
+}
+
+function editTask(id){
+  const task=tasks.find(t=>t.id===id);
+  const updated=prompt("Edit task:",task.text);
+  if(updated && updated.trim()!==""){
+    task.text=updated;
+    saveTasks();
+    renderTasks();
+  }
+}
+
+function setFilter(type,btn){
+  filter=type;
+  document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTasks();
+}
+
+function renderTasks(){
+  const list=document.getElementById("taskList");
+  list.innerHTML="";
+
+  let filtered=tasks;
+  if(filter==="completed") filtered=tasks.filter(t=>t.completed);
+  if(filter==="pending") filtered=tasks.filter(t=>!t.completed);
+
+  filtered.forEach(task=>{
+    const li=document.createElement("li");
+    if(task.completed) li.classList.add("completed");
+
+    li.innerHTML=`
+      <span class="task-text" onclick="toggleTask(${task.id})">${task.text}</span>
+      <div class="actions">
+        <button onclick="editTask(${task.id})">✏️</button>
+        <button onclick="deleteTask(${task.id})">🗑️</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+renderTasks();
+</script>
+
+</body>
+</html>
